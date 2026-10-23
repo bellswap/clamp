@@ -1,0 +1,20 @@
+# TLS front of the playground VM. Let's Encrypt certificates for the two public names; the account
+# e-mail is optional and left out. Ports 80 and 443 are the only published ports of the stack.
+{
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+rpc-play.bellswap.fun {
+	encode gzip
+	# JSON-RPC at the root path: map it onto the eRPC project path, so https://rpc-play.bellswap.fun works as an RPC URL.
+	@root path /
+	rewrite @root /play/evm/46633
+	reverse_proxy erpc:4000
+}
+
+api-play.bellswap.fun {
+	encode gzip
+	reverse_proxy bell:8787
+}

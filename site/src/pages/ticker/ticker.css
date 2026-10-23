@@ -1,0 +1,87 @@
+/* Ticker page (TickerPage.tsx), STYLE-SPEC section 13. Desktop (1024 px and up): stats strip, chart two thirds, panel
+   one third, tabs below. Phone: compact stats grid, 290 px chart, stacked rows, sticky Long / Short bar above the tab
+   bar. Lime only on the primary button, the active interval chip and the active tab underline. */
+.tk { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
+.tk-crumb { display: flex; align-items: center; gap: var(--s-2); min-height: 20px; }
+.tk-crumb .link-btn { font-size: var(--t-xs); }
+
+/* stats strip */
+.tk-stats { display: flex; align-items: stretch; min-width: 0; background: var(--surface); border: var(--hair) solid var(--border); border-radius: var(--r-m); }
+.tk-id { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-4); min-width: 0; flex: 0 1 220px; }
+.tk-id-t { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.tk-sym { font-size: var(--t-xl); font-weight: var(--w-semibold); }
+.tk-name { font-size: var(--t-xs); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tk-id-px { display: none; }
+.tk-cells { display: flex; flex: 1; min-width: 0; }
+.tk-stat { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: var(--s-2) 10px; border-left: var(--hair) solid var(--border); }
+.tk-stat-l { font-size: var(--t-2xs); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tk-stat-v { font-size: var(--t-s); font-weight: var(--w-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 1200px) { .tk-stat-v { font-size: var(--t-m); } }
+
+/* chart and panel */
+.tk-left { display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; }
+.tk-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+@media (min-width: 1024px) {
+  .tk-grid { grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr); }
+  .tk-panel { display: flex; flex-direction: column; gap: var(--s-3); position: sticky; top: 68px; }
+}
+.tk-nofeed { display: flex; flex-direction: column; align-items: center; gap: var(--s-4); padding: var(--s-14) var(--s-4); background: var(--surface); border: var(--hair) solid var(--border); border-radius: var(--r-m); }
+.tk-nofeed-t { font-size: var(--t-l); font-weight: var(--w-semibold); color: var(--muted); }
+.tk-how { font-size: var(--t-s); color: var(--muted); padding: 0 var(--s-1); }
+.tk-how summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; font-weight: var(--w-medium); }
+.tk-how ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+/* tabs */
+.tk-tabs { display: flex; flex-direction: column; min-width: 0; }
+.tk-tabbar { display: flex; gap: var(--s-5); border-bottom: var(--hair) solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.tk-tab { flex: none; height: var(--tap); color: var(--muted); font-size: var(--t-s); font-weight: var(--w-semibold); white-space: nowrap; box-shadow: inset 0 -2px 0 transparent; transition: color var(--d-press); }
+.tk-tab:hover { color: var(--text); }
+.tk-tab.on { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+.tk-skel { height: 96px; margin-top: var(--s-3); }
+.tk-rows { display: flex; flex-direction: column; }
+.tk-row { display: grid; align-items: center; gap: var(--s-3); min-height: 48px; padding: 0 var(--s-2); border-bottom: var(--hair) solid var(--border); font-size: var(--t-s); }
+.tk-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tk-head { min-height: 36px; font-size: var(--t-2xs); color: var(--muted); }
+.tk-rows-yours .tk-row { grid-template-columns: 96px repeat(6, minmax(0, 1fr)) 64px; }
+.tk-rows-recent .tk-row { grid-template-columns: 56px minmax(0, 1.6fr) 96px repeat(3, minmax(0, 1fr)); }
+.tk-rows-settled .tk-row { grid-template-columns: 56px minmax(0, 1.6fr) 96px repeat(4, minmax(0, 1fr)); }
+.tk-trader { display: flex; align-items: center; gap: var(--s-2); min-width: 0; }
+.tk-trader .mono-addr { color: var(--text); }
+.tk-trader .mono-addr:hover { text-decoration: underline; text-underline-offset: 3px; }
+.tk-act { text-align: right; }
+.tk-watch { display: inline-flex; align-items: center; height: 32px; padding: 0 10px; border: var(--hair) solid var(--border); border-radius: var(--r-s); font-size: var(--t-xs); font-weight: var(--w-semibold); }
+.tk-watch:hover { background: var(--surface-2); }
+.demo-tag { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border: var(--hair) solid var(--border-strong); border-radius: var(--r-xs); color: var(--muted); font-size: var(--t-2xs); font-weight: var(--w-medium); letter-spacing: var(--tracking-label); cursor: help; flex: none; }
+
+/* phone and tablet */
+@media (max-width: 1023px) {
+  .tk-stats { flex-direction: column; }
+  .tk-id { flex: none; padding: var(--s-3); }
+  .tk-id-px { display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; line-height: var(--lh-tight); }
+  .tk-px { font-size: var(--t-2xl); font-weight: var(--w-semibold); letter-spacing: var(--tracking-tight); }
+  .tk-chg { font-size: var(--t-s); font-weight: var(--w-medium); margin-top: 4px; }
+  .tk-cells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: var(--hair) solid var(--border); }
+  .tk-wide-only { display: none; }
+  .tk-stat { padding: var(--s-2) 10px; border-left: 0; border-right: var(--hair) solid var(--border); border-bottom: var(--hair) solid var(--border); }
+  .tk-stat:nth-child(3n) { border-right: 0; }
+  .tk-cells .tk-stat:nth-last-child(-n + 3) { border-bottom: 0; }
+  .tk-stat-v { font-size: var(--t-s); }
+  /* the sticky Long / Short bar sits above the 56 px tab bar; the app leaves room for it */
+  .app:has(.tk-phone) { padding-bottom: calc(56px + 64px + env(safe-area-inset-bottom)); }
+  .tk-sticky { position: fixed; left: 0; right: 0; bottom: calc(56px + env(safe-area-inset-bottom)); z-index: var(--z-header); display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); padding: var(--s-2) var(--gutter); background: var(--bg); border-top: var(--hair) solid var(--border); }
+  .tk-sticky-btn { height: 48px; border-radius: var(--r-s); font-size: var(--t-m); font-weight: var(--w-semibold); }
+  .tk-sticky-btn.up { background: var(--up-soft); color: var(--up); }
+  .tk-sticky-btn.down { background: var(--down-soft); color: var(--down); }
+  .tk-sticky-btn:disabled { background: var(--surface-2); color: var(--muted); }
+  /* toasts rise above the sticky bar instead of covering it */
+  body:has(.tk-phone) .toast-slot { bottom: calc(56px + 64px + 12px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 599px) {
+  .tk-rows .tk-row.tk-head { display: none; }
+  .tk-rows .tk-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--s-3); padding: 10px var(--s-1); }
+  .tk-row > span { white-space: nowrap; }
+  .tk-row > span[data-l]::before { content: attr(data-l) " "; color: var(--muted); font-size: var(--t-2xs); }
+  .tk-act { margin-left: auto; }
+}
+@media (min-width: 1024px) { .tk-sticky { display: none; } }
+.tf-sheet-head { flex: none; padding-bottom: 0; overflow: visible; }

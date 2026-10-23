@@ -1,0 +1,174 @@
+# Bellswap v2 playground stack on the playground VM. Run from /opt/bellswap-v2/infra:
+#   docker compose up -d --build
+# Variables come from infra/.env on the VM (template: infra/.env.example; never committed).
+# Only caddy publishes public ports (80, 443). anvil is published on the VM's loopback for the deploy script's SSH
+# tunnel. Docker bypasses ufw for published ports, so nothing else is published.
+name: bellswap-play
+
+# Every service logs to json-file with rotation (3 files of 50 MB), so a chatty bell or bot fleet cannot fill the disk.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: "3"
+
+services:
+  proxy:
+    logging: *logging
+    # Retrying JSON-RPC proxy to the fork upstream (drpc's transient "Unknown state" answers).
+    image: python:3.12-slim
+    restart: unless-stopped
+    environment:
+      PROXY_HOST: 0.0.0.0
+      # Keyed URL: passed as an environment variable, not argv, so ps on the VM does not show it; the proxy logs
+      # only its scheme and host.
+      PROXY_UPSTREAM: ${ANVIL_UPSTREAM:-https://robinhood.drpc.org}
+    command: ["python3", "-u", "/proxy/upstream-proxy.py", "8672"]
+    volumes:
+      - ./fork/upstream-proxy.py:/proxy/upstream-proxy.py:ro
+
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:v1.7.1
+    logging: *logging
+    restart: unless-stopped
+    user: root
+    entrypoint: ["/bin/bash", "/infra/anvil/entrypoint.sh"]
+    environment:
+      ANVIL_FORK_BLOCK: ${ANVIL_FORK_BLOCK:?set ANVIL_FORK_BLOCK in infra/.env}
+      ANVIL_FORK_URL: http://proxy:8672
+      ANVIL_CHAIN_ID: "46633"
+      ANVIL_STATE: /data/anvil.json
+      # 600 s: a 2.5 GB dump every 60 s got anvil OOM-killed 261 times on 2026-10-20 (infra/anvil/entrypoint.sh).
+      ANVIL_STATE_INTERVAL: "600"
+      # Keep transactions and receipts of the last N blocks only (anvil --transaction-block-keeper; the entrypoint adds
+      # the flag only when this is non-empty). 7200 blocks is about 45 min at 2.5 blocks/s. It bounds history only on a
+      # fresh fork: a dump loaded with the flag keeps its old transactions (rig probe 2026-10-23). Set it empty in
+      # infra/.env to run without the flag. Older receipts and logs are gone, so the bell must never re-index from
+      # deployBlock on a fork that ran with the flag.
+      ANVIL_TX_BLOCK_KEEPER: ${ANVIL_TX_BLOCK_KEEPER-7200}
+    volumes:
+      - anvil-data:/data
+      # The whole directory: entrypoint.sh runs restore-clock.sh next to it after every anvil start.
+      - ./anvil:/infra/anvil:ro
+    ports:
+      - "127.0.0.1:8545:8545"
+    depends_on:
+      - proxy
+    # The dump write on SIGTERM takes longer as the state grows; docker kills after this and truncates the dump.
+    stop_grace_period: 180s
+    healthcheck:
+      test: ["CMD", "cast", "chain-id", "--rpc-url", "http://127.0.0.1:8545"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 60s
+
+  rpc-guard:
+    # JSON-RPC passthrough between eRPC and anvil (services/rpc-guard): rejects eth_sendRawTransaction signed by anvil
+    # dev keys 0 to 9 and any transaction to the reference; everything else passes byte for byte. The bell and the bots
+    # use anvil:8545 directly. Bypass: point erpc.yaml's upstream back at http://anvil:8545 and restart erpc.
+    build:
+      context: ../services/rpc-guard
+    logging: *logging
+    restart: unless-stopped
+    environment:
+      RPC_GUARD_PORT: "8546"
+      RPC_GUARD_UPSTREAM: http://anvil:8545
+      # The DemoSignerReference and the contracts a raw transaction may call, from deployments/book.json (reseed.sh
+      # step e keeps these addresses and refuses to go on when they differ; step a checks these defaults against
+      # book.json). Fixed defaults, not only the bell's /state: the bell is down from reseed step b to step i and may
+      # restart at any time, and a guard that learns the reference only from the bell would pass a post signed with
+      # the public dev key 1 while the bell is away. The guard merges the bell's book into these lists.
+      RPC_GUARD_REF: ${RPC_GUARD_REF:-0x980ea9f1a0C36e1E5f3B6BD451bEf8a7Fe661f97}
+      RPC_GUARD_TARGETS: ${RPC_GUARD_TARGETS:-0xA2Ec435D67B35893b81a87212815DCDd20EE4f9B,0xB8357F7f41125d4b24AD052c1b7288BeF5C43446,0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168}
+      RPC_GUARD_BELL_URL: http://bell:8787
+    depends_on:
+      - anvil
+    healthcheck:
+      # eth_chainId through the guard to anvil (0xb629 = 46633).
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:8546',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_chainId',params:[]})}).then(r=>r.json()).then(j=>process.exit(j.result==='0xb629'?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  erpc:
+    image: ghcr.io/erpc/erpc:0.3.0@sha256:f273ab9a061dfea908e59444093fc235308fb37cc0c4d21b3e0e6eb92ef5ae7e
+    logging: *logging
+    restart: unless-stopped
+    command: ["/erpc-server", "--config", "/erpc.yaml"]
+    volumes:
+      - ./erpc/erpc.yaml:/erpc.yaml:ro
+    depends_on:
+      - rpc-guard
+
+  bell:
+    build:
+      context: ../services/bell
+      # services/bell/Dockerfile when it exists (set BELL_DOCKERFILE=Dockerfile), else infra's.
+      dockerfile: ${BELL_DOCKERFILE:-../../infra/bell/Dockerfile}
+    logging: *logging
+    restart: unless-stopped
+    environment:
+      BELL_PORT: "8787"
+      PORT: "8787"
+      BELL_RPC_URL: http://anvil:8545
+      BELL_CHAIN_ID: "46633"
+      BELL_SIGNER_KEY: ${BELL_SIGNER_KEY:?set BELL_SIGNER_KEY in infra/.env}
+      BELL_ADMIN_TOKEN: ${BELL_ADMIN_TOKEN:?set BELL_ADMIN_TOKEN in infra/.env}
+      # Allowed origins: the service default (play.bellswap.fun, the Pages previews, localhost) unless set here.
+      BELL_ORIGINS: ${BELL_ORIGINS:-}
+      BELL_STATE_FILE: /data/state.json
+      BELL_BOOK: /data/book.json
+      # Faucet calls per client IP per hour; a venue network puts every visitor behind one IP.
+      BELL_FAUCET_IP_MAX: ${BELL_FAUCET_IP_MAX:-1000}
+    volumes:
+      - bell-data:/data
+    depends_on:
+      - anvil
+    profiles: ["bell"]
+
+  bots:
+    # Demo trader fleet (services/bots): 24 traders and 4 LPs from BOTS_MNEMONIC, every address registered as a bot
+    # with the bell (POST /admin/bots) and shown with a "demo" tag. No ports. Off unless BOTS_ENABLED=1; kill switch:
+    # docker compose stop bots. BOTS_MNEMONIC is generated on the VM (cast wallet new-mnemonic) and appended to
+    # infra/.env without printing. It uses ${VAR:-} and not ${VAR:?}: compose interpolates services of inactive
+    # profiles too, so a required variable would fail every compose command on the VM until the mnemonic exists; the
+    # service itself exits when it is empty.
+    build:
+      context: ../services/bots
+    logging: *logging
+    restart: unless-stopped
+    environment:
+      BOTS_MNEMONIC: ${BOTS_MNEMONIC:-}
+      BOTS_COUNT: ${BOTS_COUNT:-24}
+      BOTS_LP: ${BOTS_LP:-4}
+      BOTS_ENABLED: ${BOTS_ENABLED:-0}
+      BOTS_INTERVAL_MS: ${BOTS_INTERVAL_MS:-3000}
+      BOTS_RPC_URL: http://anvil:8545
+      BOTS_BELL_URL: http://bell:8787
+      BELL_ADMIN_TOKEN: ${BELL_ADMIN_TOKEN:?set BELL_ADMIN_TOKEN in infra/.env}
+    depends_on:
+      - bell
+    profiles: ["bell"]
+
+  caddy:
+    image: caddy:2
+    logging: *logging
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - erpc
+
+volumes:
+  anvil-data:
+  bell-data:
+  caddy-data:
+  caddy-config:

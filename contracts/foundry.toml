@@ -1,0 +1,27 @@
+# Bellswap v2 Foundry configuration.
+# Libraries are vendored under lib/ (no git submodules): OpenZeppelin Contracts v5.7.0 and forge-std v1.16.2.
+# Remappings live in remappings.txt.
+
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+libs = ["lib"]
+auto_detect_remappings = false
+out = "out"
+cache_path = "cache"
+solc_version = "0.8.26"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 800
+via_ir = false
+# The deploy script writes deployments/book.json at the repo root.
+fs_permissions = [{ access = "read-write", path = "../deployments" }]
+
+[profile.default.fuzz]
+runs = 256
+
+# Keyless public endpoints only. Never put a URL that carries an API key here.
+[rpc_endpoints]
+robinhood = "https://robinhood-rpc.publicnode.com"
+playground = "${PLAYGROUND_RPC_URL}"

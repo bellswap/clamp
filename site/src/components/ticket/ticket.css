@@ -1,0 +1,30 @@
+/* Ticket form (TicketForm.tsx), in the ticker page's panel and in the phone sheet. Side segments carry --up and
+   --down on their soft tints; the primary button is the page's only accent fill (STYLE-SPEC sections 2 and 13). */
+.tf-panel { display: flex; flex-direction: column; background: var(--surface); border: var(--hair) solid var(--border); border-radius: var(--r-m); }
+.tf-body { display: flex; flex-direction: column; gap: var(--s-4); }
+.tf-panel .tf-body { padding: var(--s-4); }
+.tf-foot { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-3) var(--s-4) var(--s-4); border-top: var(--hair) solid var(--border); }
+.tf-side { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 2px; background: var(--surface-2); border-radius: var(--r-s); }
+.tf-side-opt { height: 44px; border-radius: var(--r-s); border: var(--hair) solid transparent; color: var(--muted); font-size: var(--t-m); font-weight: var(--w-semibold); transition: color var(--d-press), background var(--d-press); }
+.tf-side-opt:hover { color: var(--text); }
+.tf-side-opt.up.on { color: var(--up); background: var(--up-soft); border-color: var(--up); }
+.tf-side-opt.down.on { color: var(--down); background: var(--down-soft); border-color: var(--down); }
+.tf-mults { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 2px; background: var(--surface-2); border-radius: var(--r-s); }
+.tf-mult { height: 36px; border-radius: var(--r-s); border: var(--hair) solid transparent; color: var(--muted); font-size: var(--t-s); font-weight: var(--w-medium); }
+.tf-mult:hover:not(:disabled) { color: var(--text); }
+.tf-mult.on { background: var(--surface); border-color: var(--border-strong); color: var(--text); }
+.tf-mult:disabled:not(.on) { opacity: 0.4; }
+.tf-settle { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); min-height: 44px; padding: 0 var(--s-3); background: var(--surface-2); border: var(--hair) solid var(--border); border-radius: var(--r-s); font-size: var(--t-s); font-weight: var(--w-medium); text-align: left; }
+.tf-settle:hover { border-color: var(--border-strong); }
+.tf-chev { color: var(--muted); transform: rotate(90deg); transition: transform var(--d-press); }
+.tf-chev.open { transform: rotate(-90deg); }
+.tf-settle-list { display: flex; flex-direction: column; border: var(--hair) solid var(--border); border-radius: var(--r-s); background: var(--surface-2); }
+.tf-settle-opt { min-height: 44px; padding: 0 var(--s-3); text-align: left; font-size: var(--t-s); color: var(--muted); border-bottom: var(--hair) solid var(--border); }
+.tf-settle-opt:last-child { border-bottom: 0; }
+.tf-settle-opt:hover { color: var(--text); }
+.tf-settle-opt.on { color: var(--text); background: var(--surface); }
+.tf-rows { display: flex; flex-direction: column; margin: 0; font-size: var(--t-s); }
+.tf-rows div { display: flex; justify-content: space-between; gap: var(--s-3); padding: 5px 0; border-bottom: var(--hair) solid var(--border); }
+.tf-rows div:last-child { border-bottom: 0; }
+.tf-rows dt { color: var(--muted); }
+.tf-rows dd { margin: 0; font-weight: var(--w-medium); }

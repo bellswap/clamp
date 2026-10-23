@@ -1,0 +1,5 @@
+IPyth.sol, IPythEvents.sol and PythStructs.sol are copied from
+https://github.com/pyth-network/pyth-sdk-solidity (branch main, fetched 2026-10-18), Apache-2.0.
+IPyth.sol imports IPythEvents.sol, so that file is vendored as well.
+Local change, comments only: "@pythnetwork" in the upstream deprecation header is written "(at)pythnetwork",
+because solc reads it inside NatSpec as an invalid tag. No code changed.

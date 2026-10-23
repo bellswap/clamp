@@ -1,0 +1,188 @@
+/* Bellswap v2 design tokens. Source of truth: docs/STYLE-SPEC.md.
+   Dark is the default theme; light follows the system unless data-theme="dark" is set, or is forced with
+   data-theme="light". Every text colour below holds 4.5:1 on bg, surface and surface-2 in its theme
+   (checked by docs/style/contrast.py against this file).
+   Rules: --accent appears only on the primary action and the verdict moment. Up and down never carry
+   meaning by colour alone (always a sign, an arrow or the words Long / Short next to them). No glow,
+   no gradients on UI chrome. The dark theme uses the bellswap.fun palette (black ground, neon #CCFF00 as the
+   accent and the up colour, signal orange as down), Archivo, hairline borders and 2 px corners. */
+
+/* Archivo (SIL OFL 1.1): each app ships its licence at /fonts/OFL-Archivo.txt (public/fonts). */
+@font-face {
+  font-family: "Archivo";
+  src: url("./fonts/archivo.ttf") format("truetype");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* ---------- colour: dark (default) ---------- */
+  --bg: #000000;             /* page */
+  --surface: #0C0E0A;        /* cards, sheets, rows on hover */
+  --surface-2: #151810;      /* inputs, segmented controls, nested panels */
+  --border: #23261F;         /* 1 px hairlines */
+  --border-strong: #3A3E33;  /* focus-adjacent edges, selected segment */
+  --text: #F4F5F0;           /* primary text and numbers */
+  --muted: #8E948A;          /* labels, timestamps, secondary numbers (>= 4.5:1 on all three grounds) */
+  --faint: #5E6459;          /* decoration only, never text: grid lines, sparkline baselines, perforation */
+
+  --up: #CCFF00;             /* long, gain, a ticket in the money */
+  --down: #FF6A3D;           /* short, loss, a ticket out of the money */
+  --up-soft: rgba(204, 255, 0, .14);   /* row and chip tint behind --up text */
+  --down-soft: rgba(255, 106, 61, .14);
+
+  --accent: #CCFF00;         /* neon: primary action and verdict moment only */
+  --on-accent: #000000;      /* text on --accent */
+  --accent-soft: rgba(204, 255, 0, .14); /* verdict card ring, primary button pressed halo */
+  --focus: #CCFF00;          /* keyboard focus ring (shares the accent hue; it is not a second accent) */
+
+  --scrim: rgb(0 0 0 / 0.72); /* behind sheets and dialogs */
+  --shadow-sheet: 0 -18px 40px rgba(0, 0, 0, .6);
+  --shadow-pop: 0 18px 40px rgba(0, 0, 0, .6);
+
+  /* ---------- type ---------- */
+  --font-sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --num: tabular-nums;       /* apply as font-variant-numeric on every number */
+  --num-features: "tnum" 1, "zero" 0;
+
+  --t-2xs: 11px;  /* chip text, axis ticks */
+  --t-xs: 12px;   /* labels, the disclaimer line */
+  --t-s: 13px;    /* table cells, secondary */
+  --t-m: 15px;    /* body */
+  --t-l: 17px;    /* row primary, inputs */
+  --t-xl: 20px;   /* card titles, sheet title */
+  --t-2xl: 28px;  /* payout figure, countdown on the ticket sheet */
+  --t-3xl: 40px;  /* verdict figure, watch countdown */
+  --t-4xl: 56px;  /* landing headline (phone: --t-3xl) */
+  --t-5xl: 80px;  /* landing headline, desktop only */
+
+  --w-regular: 400;
+  --w-medium: 500;
+  --w-semibold: 600;
+  --w-bold: 700;
+
+  --lh-tight: 1.1;
+  --lh-snug: 1.3;
+  --lh-body: 1.5;
+  --tracking-tight: -0.02em; /* sizes >= --t-2xl */
+  --tracking-label: 0.04em;  /* uppercase micro labels */
+
+  /* ---------- space (4 px base) ---------- */
+  --s-0: 0;
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-14: 56px;
+  --s-20: 80px;
+  --s-30: 120px; /* landing section rhythm */
+
+  --gutter: 16px;            /* phone side gutter */
+  --gutter-wide: 24px;       /* >= 768 px */
+  --maxw-app: 1280px;
+  --maxw-read: 640px;        /* landing prose column */
+  --row-h: 56px;             /* ticker row */
+  --tap: 44px;               /* minimum hit target */
+
+  /* ---------- radius ---------- */
+  /* square corners, as bellswap.fun renders them (its --r-card, --r-panel, --r-field, --r-pill are 2 px) */
+  --r-xs: 2px;    /* chips, monogram */
+  --r-s: 2px;     /* inputs, buttons, segments */
+  --r-m: 2px;     /* cards */
+  --r-l: 2px;     /* sheets, verdict card */
+  --r-pill: 2px;
+
+  /* ---------- lines ---------- */
+  --hair: 1px;
+  --perf: 1px dashed var(--faint); /* the ticket perforation between the call and the result */
+
+  /* ---------- motion ---------- */
+  /* Only three things move: the countdown, the payout meter, the verdict reveal.
+     Everything else changes state without animation (hover and press are colour changes, 80 ms). */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --d-press: 80ms;           /* colour change on hover and press, not a movement */
+  --d-meter: 240ms;          /* payout meter follows stake and multiple */
+  --d-tick: 1000ms;          /* countdown digit step */
+  --d-verdict: 640ms;        /* verdict reveal: result half slides up and the figure counts to its value */
+  --d-sheet: 280ms;          /* ticket sheet enter and leave (the sheet is part of the ticket flow) */
+
+  /* ---------- layers ---------- */
+  --z-header: 20;
+  --z-sheet: 40;
+  --z-toast: 60;
+
+  /* ---------- share card ---------- */
+  --share-w: 1200px;
+  --share-h: 630px;
+}
+
+/* ---------- colour: light ---------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #F6F6F3;
+    --surface: #FFFFFF;
+    --surface-2: #EFEFEB;
+    --border: #E2E2DD;
+    --border-strong: #CACAC3;
+    --text: #131417;
+    --muted: #5C6170;
+    --faint: #B4B6BC;
+    --up: #0A754C;
+    --down: #C42F45;
+    --up-soft: rgb(10 117 76 / 0.09);
+    --down-soft: rgb(196 47 69 / 0.08);
+    --accent: #4146D8;
+    --on-accent: #FFFFFF;
+    --accent-soft: rgb(65 70 216 / 0.12);
+    --focus: #4146D8;
+    --scrim: rgb(19 20 23 / 0.4);
+    --shadow-sheet: 0 -8px 32px rgb(19 20 23 / 0.12);
+    --shadow-pop: 0 8px 24px rgb(19 20 23 / 0.1);
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F6F6F3;
+  --surface: #FFFFFF;
+  --surface-2: #EFEFEB;
+  --border: #E2E2DD;
+  --border-strong: #CACAC3;
+  --text: #131417;
+  --muted: #5C6170;
+  --faint: #B4B6BC;
+  --up: #0A754C;
+  --down: #C42F45;
+  --up-soft: rgb(10 117 76 / 0.09);
+  --down-soft: rgb(196 47 69 / 0.08);
+  --accent: #4146D8;
+  --on-accent: #FFFFFF;
+  --accent-soft: rgb(65 70 216 / 0.12);
+  --focus: #4146D8;
+  --scrim: rgb(19 20 23 / 0.4);
+  --shadow-sheet: 0 -8px 32px rgb(19 20 23 / 0.12);
+  --shadow-pop: 0 8px 24px rgb(19 20 23 / 0.1);
+}
+
+@media (min-width: 768px) {
+  :root { --gutter: var(--gutter-wide); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-meter: 0ms;
+    --d-verdict: 0ms;
+    --d-sheet: 0ms;
+  }
+}

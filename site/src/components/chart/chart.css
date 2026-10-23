@@ -1,0 +1,24 @@
+/* Ticker chart (CandleChart.tsx). The canvas colours come from the play tokens through useChartInstance.ts; this file
+   lays out the interval chips, the legend, the box and the source note. The active chip is the accent on its soft
+   tint (STYLE-SPEC section 13: lime on the active interval chip, never on the canvas). */
+.tk-chart { display: flex; flex-direction: column; min-width: 0; border: var(--hair) solid var(--border); border-radius: var(--r-m); background: var(--bg); }
+.tk-chart-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2) var(--s-4); min-height: 44px; padding: 4px var(--s-2); border-bottom: var(--hair) solid var(--border); }
+.tf-chips { display: flex; gap: 2px; }
+.tf { position: relative; height: 28px; min-width: 40px; padding: 0 10px; border-radius: var(--r-xs); color: var(--muted); font-size: var(--t-xs); font-weight: var(--w-semibold); font-variant-numeric: var(--num); transition: color var(--d-press), background var(--d-press); }
+.tf:hover { color: var(--text); }
+.tf.on { color: var(--accent); background: var(--accent-soft); }
+/* 44 px hit area around the 28 px chip */
+.tf::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: var(--tap); transform: translateY(-50%); }
+.tk-legend { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: var(--t-2xs); color: var(--muted); margin-left: auto; }
+.tk-legend b { font-weight: var(--w-medium); color: var(--text); }
+.tk-legend-t { color: var(--muted); }
+.tk-chart-wrap { position: relative; }
+.tk-chart-box { height: 560px; position: relative; overflow: hidden; contain: size; }
+.tk-chart-empty { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.tk-source { padding: 6px var(--s-3) 8px; border-top: var(--hair) solid var(--border); font-size: var(--t-2xs); color: var(--muted); }
+@media (max-width: 1023px) {
+  .tk-chart-box { height: 290px; }
+  .tk-chart-head { padding: 0 var(--s-1); }
+  .tf { height: 32px; min-width: 44px; }
+  .tk-legend { margin-left: 0; width: 100%; padding: 0 6px 6px; }
+}

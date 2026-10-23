@@ -1,0 +1,189 @@
+# eRPC in front of the playground anvil fork (chain id 46633, a fork of Robinhood Chain 4663), on the playground
+# VM, compose service erpc. Taken from the first Bellswap demo: same public method allowlist,
+# budgets and failsafe; project "play", network evm:46633, CORS for the playground origins, IPv4 listener on 4000,
+# Caddy (docker network) as the trusted forwarder. Public URL: https://rpc-play.bellswap.fun (Caddy rewrites the root
+# path to /play/evm/46633) or https://rpc-play.bellswap.fun/play/evm/46633.
+#
+# eRPC runs os.ExpandEnv over this whole file before parsing it. Keep dollar signs out of comments and values.
+
+logLevel: info
+
+server:
+  listenV4: true
+  httpHostV4: "0.0.0.0"
+  httpPortV4: 4000
+  listenV6: false
+  maxTimeout: 60s
+  includeErrorDetails: false
+  # Caddy reaches eRPC over the compose network (docker bridge ranges); the right-most address outside these ranges
+  # in X-Forwarded-For is the client IP for the per-visitor budget.
+  trustedIPForwarders:
+    - "172.16.0.0/12"
+    - "192.168.0.0/16"
+    - "10.0.0.0/8"
+    - "127.0.0.0/8"
+  trustedIPHeaders:
+    - "X-Forwarded-For"
+
+metrics:
+  enabled: true
+  port: 4001
+
+# No cache: the fork's blocks are not final in any lasting sense (an anvil restart reloads the last state dump and
+# can re-mine heights; a reset replaces the chain), so every request goes to anvil.
+
+rateLimiters:
+  budgets:
+    # Every caller together, per method (eRPC 0.3.0 counts a "*" rule per method name). 600/s: a venue puts every
+    # visitor behind one IP, and the per-IP budget below is the real limit for that IP.
+    - id: project-ceiling
+      rules:
+        - method: "*"
+          maxCount: 600
+          period: second
+    # One public client IP, per method (same shape as erpc/erpc.yaml visitor-per-ip), sized for one venue IP with a
+    # room of phones on it: eth_call 400/s and 12,000/min; other methods 150/s and 4,500/min;
+    # eth_getLogs 30/s and 900/min; eth_sendRawTransaction 600/min.
+    - id: visitor-per-ip
+      rules:
+        - method: "eth_call"
+          maxCount: 400
+          period: second
+          perIP: true
+        - method: "eth_call"
+          maxCount: 12000
+          period: minute
+          perIP: true
+        - method: "!eth_call"
+          maxCount: 150
+          period: second
+          perIP: true
+        - method: "!eth_call"
+          maxCount: 4500
+          period: minute
+          perIP: true
+        - method: "eth_getLogs"
+          maxCount: 30
+          period: second
+          perIP: true
+        - method: "eth_getLogs"
+          maxCount: 900
+          period: minute
+          perIP: true
+        - method: "eth_sendRawTransaction"
+          maxCount: 600
+          period: minute
+          perIP: true
+
+projects:
+  - id: play
+    rateLimitBudget: project-ceiling
+    # One strategy, for every caller: only the methods in allowMethods pass (ignoreMethods "*" drops the strategy for
+    # the rest, so any other method matches no strategy and is refused as unauthorized). Not allowed, on purpose:
+    # anvil_*, evm_*, hardhat_*, debug_*, txpool_*, personal_*, and the eth_ methods anvil answers with its unlocked
+    # dev keys or impersonated accounts (eth_sendTransaction, eth_sign, eth_signTransaction, eth_signTypedData*,
+    # eth_accounts). Signed transactions only (eth_sendRawTransaction from the browser's demo wallet).
+    auth:
+      strategies:
+        - type: network
+          rateLimitBudget: visitor-per-ip
+          ignoreMethods: ["*"]
+          allowMethods:
+            - eth_chainId
+            - eth_blockNumber
+            - eth_call
+            - eth_estimateGas
+            # Unsigned helper: anvil 1.7.1 fills nonce, gas and fees and returns the tx with r=s=0, also for a dev key
+            # address (probed on the VM 2026-10-23). The site's ticket open calls it.
+            - eth_fillTransaction
+            - eth_createAccessList
+            - eth_getBalance
+            - eth_getCode
+            - eth_getStorageAt
+            - eth_getLogs
+            - eth_getBlockByNumber
+            - eth_getBlockByHash
+            - eth_getBlockReceipts
+            - eth_getTransactionByHash
+            - eth_getTransactionReceipt
+            - eth_getTransactionCount
+            - eth_gasPrice
+            - eth_maxPriorityFeePerGas
+            - eth_feeHistory
+            - eth_syncing
+            - eth_sendRawTransaction
+            - net_version
+            - web3_clientVersion
+          network:
+            allowLocalhost: true
+            allowedCIDRs:
+              - "0.0.0.0/0"
+              - "::/0"
+            ipAsUser: true
+
+    # The playground origins: the custom domain, the Pages project and its branch previews, local dev servers.
+    # eRPC wildcards: "*" any sequence, "." any single character.
+    cors:
+      allowedOrigins:
+        - "https://play.bellswap.fun"
+        - "https://bellswap-play.pages.dev"
+        - "https://*.bellswap-play.pages.dev"
+        - "http://localhost:5173"
+        - "http://127.0.0.1:5173"
+        - "http://localhost:4173"
+        - "http://127.0.0.1:4173"
+      allowedMethods: ["GET", "POST", "OPTIONS"]
+      allowedHeaders: ["content-type"]
+      exposedHeaders: ["X-ERPC-Duration", "X-ERPC-Attempts"]
+      allowCredentials: false
+      maxAge: 3600
+
+    networkDefaults:
+      failsafe:
+        - matchMethod: "*"
+          timeout:
+            duration: 55s
+          retry:
+            maxAttempts: 3
+            delay: 200ms
+
+    upstreamDefaults:
+      failsafe:
+        - matchMethod: "*"
+          # Historical eth_getLogs and cold-state eth_call go through anvil to dRPC.
+          timeout:
+            duration: 50s
+          retry:
+            maxAttempts: 1
+          circuitBreaker:
+            failureThresholdCount: 40
+            failureThresholdCapacity: 80
+            halfOpenAfter: 30s
+            successThresholdCount: 2
+
+    networks:
+      - architecture: evm
+        evm:
+          chainId: 46633
+          # One upstream that is the chain itself: no cross-upstream block checks.
+          integrity:
+            enforceHighestBlock: false
+            enforceGetLogsBlockRange: false
+        alias: fork
+        # Pass "latest" through as is. eRPC otherwise rewrites the tag to the highest block its state poller has seen,
+        # so a read right after a demo transaction answered with the block before it (measured: a faucet transfer,
+        # then balanceOf 0 through this proxy and 2,000 USDG straight from anvil). No retry of empty answers either
+        # (a null receipt is a real "not mined yet" on the only upstream).
+        directiveDefaults:
+          skipInterpolation: true
+          retryEmpty: false
+
+    # The upstream is rpc-guard (compose service), which passes every request to anvil:8545 except raw transactions
+    # signed by anvil dev keys 0 to 9 or sent to the reference. Guard bypass: set the endpoint
+    # back to http://anvil:8545 and run docker compose restart erpc.
+    upstreams:
+      - id: anvil
+        endpoint: http://rpc-guard:8546
+        evm:
+          chainId: 46633
+          statePollerInterval: 2s

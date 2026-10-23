@@ -1,0 +1,15 @@
+# Runs infra/ops/anvil-watchdog.sh once as debian. Started by
+# anvil-watchdog.timer every 5 minutes. Install: sudo install -m 644 anvil-watchdog.{service,timer} /etc/systemd/system/
+[Unit]
+Description=Bellswap playground anvil memory watchdog
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+User=debian
+Group=debian
+Environment=HOME=/home/debian
+ExecStart=/opt/bellswap-v2/infra/ops/anvil-watchdog.sh
+# A restart waits up to 180 s for the dump write and 300 s for the healthcheck.
+TimeoutStartSec=15min
