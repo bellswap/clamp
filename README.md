@@ -19,7 +19,7 @@ A demo signer replays the recorded prices on chain; no real funds are involved.
 | services/bots/ | a fleet of demo traders and LPs for the playground |
 | services/rpc-guard/ | JSON-RPC passthrough in front of the fork that rejects transactions signed by anvil dev keys or sent to the reference |
 | site/ | the playground app (Vite 7, React 19, viem) |
-| deployments/ | book.json (the playground addresses, fee and market parameters), 46633.json, catalog-markets.json |
+| deployments/ | book.json (the playground addresses, fee and market parameters), 46633.json, catalog-markets.json, testnet/46630.json (Robinhood Chain testnet) |
 | infra/ | docker-compose for the playground VM (anvil fork, eRPC, rpc-guard, bell, bots, Caddy), the deploy script and ops scripts |
 | docs/ | INTERFACES.md (the interfaces the parts were built against), STYLE-SPEC.md (the site's style rules) |
 | scripts/abi.ts | writes the ABIs from the contracts build into services/bell and site |
@@ -74,7 +74,9 @@ References (contracts/src/references) put one interface, IReference, over Chainl
 
 ### Deployments
 
-deployments/book.json lists the playground addresses of USDG, HouseVault, TicketBook and DemoSignerReference, plus the fee and the market parameters. Nothing in this repository is deployed on a public mainnet.
+deployments/book.json lists the playground addresses of USDG, HouseVault, TicketBook and DemoSignerReference, plus the fee and the market parameters.
+
+deployments/testnet/46630.json lists the Robinhood Chain testnet deployment of 2026-10-23 (chain id 46630): a mock USDG, HouseVault, TicketBook and DemoSignerReference, with all 472 catalog markets listed against the demo signer. The four sources are verified on Sourcify as exact matches (https://sourcify.dev/#/lookup/ followed by the address). Nothing in this repository is deployed on a public mainnet.
 
 ### Run the tests
 

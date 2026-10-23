@@ -1,0 +1,169 @@
+{
+  "chainId": 46630,
+  "block": 141186133,
+  "deployBlock": 141186133,
+  "usdg": "0x2c450C01ec5A107c2Df4fCde1e83f7f27F97f071",
+  "usdgDecimals": 6,
+  "usdgIsMock": true,
+  "vault": "0xB8Cb03B11E57902cBB55aB684d79f05ca615AEae",
+  "book": "0xC79984BE6e4465A162bb4d535168D78f3652b0aB",
+  "demoSigner": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+  "signer": "0x31e3f753354787a974d1769A04C3e8eE072443C5",
+  "owner": "0x3128D0b3E75c9Cd5C4a5D27208bd7A64E2D0f94f",
+  "feeBps": 100,
+  "seedUsdg": "1000000000000",
+  "addresses": {
+    "USDG": "0x2c450C01ec5A107c2Df4fCde1e83f7f27F97f071",
+    "HouseVault": "0xB8Cb03B11E57902cBB55aB684d79f05ca615AEae",
+    "TicketBook": "0xC79984BE6e4465A162bb4d535168D78f3652b0aB",
+    "DemoSignerReference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB"
+  },
+  "markets": [
+    {
+      "ticker": "RTX",
+      "symbol": "0x5254580000000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": false,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "NOC",
+      "symbol": "0x4e4f430000000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": false,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "CPER",
+      "symbol": "0x4350455200000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": false,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "SOXL",
+      "symbol": "0x534f584c00000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": false,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "DRAM",
+      "symbol": "0x4452414d00000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": false,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "GD",
+      "symbol": "0x4744000000000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": false,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "MARA",
+      "symbol": "0x4d41524100000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": false,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "UUUU",
+      "symbol": "0x5555555500000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": false,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "SPY",
+      "symbol": "0x5350590000000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": true,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "QQQ",
+      "symbol": "0x5151510000000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": true,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "NVDA",
+      "symbol": "0x4e56444100000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": true,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "MU",
+      "symbol": "0x4d55000000000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": true,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "SNDK",
+      "symbol": "0x534e444b00000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": true,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    },
+    {
+      "ticker": "TSLA",
+      "symbol": "0x54534c4100000000000000000000000000000000000000000000000000000000",
+      "reference": "0x9565d8fe979d64524FA6e73ce32f8b10500C4dEB",
+      "robinhoodChain": true,
+      "maxLeverage": 20,
+      "maxStake": "1000000000",
+      "oiCap": "50000000000",
+      "maxStaleness": 86400
+    }
+  ],
+  "verification": {
+    "sourcify": "exact_match for all four contracts on 2026-10-23 (chain 46630)",
+    "lookup": "https://sourcify.dev/#/lookup/<address>",
+    "repo": "https://repo.sourcify.dev/46630/<address>",
+    "blockscout": "unverified (2026-10-23 08:40 UTC) for all four contracts; the explorer verifier service fails: standard-input -> verification_result error \"response returned with invalid status code; status=500 Internal Server Error\" (all four), flattened-code -> same 500 (MockUSDG), forge --verifier blockscout -> \"Fail - Unable to verify\"; Blockscout public verifier also returns 502 for a trivial control contract; newest verified contract on the explorer 2026-10-21 20:45 UTC. Sourcify exact_match stands."
+  }
+}
