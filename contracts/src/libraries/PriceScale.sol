@@ -7,6 +7,7 @@ pragma solidity 0.8.26;
 library PriceScale {
     error NonPositivePrice();
     error ScaleOutOfRange();
+    error ZeroScaledPrice();
 
     uint8 internal constant PRICE_DECIMALS = 8;
 
@@ -23,6 +24,14 @@ library PriceScale {
             return a / (10 ** d);
         }
         return a * (10 ** (PRICE_DECIMALS - decimals));
+    }
+
+    /// @notice `price8` itself, or a revert when a positive source price scaled down to 0 (an entry price must be
+    /// positive: the payout divides by it). Used on the `latest` path only; a settlement price of 0 is a valid
+    /// outcome (a full loss for a long) and must not block settlement.
+    function nonZero(uint256 price8) internal pure returns (uint256) {
+        if (price8 == 0) revert ZeroScaledPrice();
+        return price8;
     }
 
     /// @notice A Pyth price `price * 10^expo` as an 8-decimal price.

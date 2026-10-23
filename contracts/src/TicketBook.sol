@@ -129,6 +129,8 @@ contract TicketBook is Ownable, Pausable, ReentrancyGuard {
     error NotExpired(uint256 id, uint64 expiry);
     error EarlyPrice(uint64 timestamp, uint64 expiry);
     error ReserveInvariant(uint256 payout, uint256 bucketReserved);
+    error ZeroPrice();
+    error ReferenceLocked(bytes32 symbol, uint256 oi);
 
     constructor(IERC20 usdg_, HouseVault vault_, address owner_, uint16 feeBps_) Ownable(owner_) {
         if (address(usdg_) == address(0) || address(vault_) == address(0)) revert ZeroAddress();
@@ -143,8 +145,10 @@ contract TicketBook is Ownable, Pausable, ReentrancyGuard {
 
     // ------------------------------------------------------------------ owner
 
-    /// @notice Lists `symbol` or updates its parameters. Open interest is kept on an update; buckets keep the
-    /// reference they were opened with.
+    /// @notice Lists `symbol` or updates its parameters. Open interest is kept on an update. The reference can change
+    /// only while the market has no open ticket (`oi == 0`): every open ticket sits in a bucket priced on the
+    /// reference it entered on, and a new ticket in that bucket must not enter on a different one. With `oi == 0`
+    /// every bucket that ever held a ticket has expired, so no new ticket joins a bucket of the old reference.
     function listMarket(
         bytes32 symbol,
         address referenceAddress,
@@ -157,6 +161,7 @@ contract TicketBook is Ownable, Pausable, ReentrancyGuard {
         if (referenceAddress == address(0)) revert ZeroAddress();
         if (maxLeverage == 0 || maxLeverage > MAX_LEVERAGE) revert BadMaxLeverage(maxLeverage);
         Market storage m = markets[symbol];
+        if (m.oi != 0 && address(m.ref) != referenceAddress) revert ReferenceLocked(symbol, m.oi);
         if (!m.listed) {
             m.listed = true;
             _symbols.push(symbol);
@@ -285,6 +290,7 @@ contract TicketBook is Ownable, Pausable, ReentrancyGuard {
         if (m.oi + stake > m.oiCap) revert OiCap(m.oi + stake, m.oiCap);
         uint64 ts;
         (entry, ts,) = m.ref.latest(symbol);
+        if (entry == 0) revert ZeroPrice();
         if (ts < block.timestamp && block.timestamp - ts > m.maxStaleness) revert Stale(ts, m.maxStaleness);
     }
 
@@ -312,17 +318,23 @@ contract TicketBook is Ownable, Pausable, ReentrancyGuard {
     // ------------------------------------------------------------------ math
 
     /// @notice The payout multiplier clamp(1 + L * r, 0, L) in 1e18 fixed point, r signed by side. Rounds down:
-    /// a gain is floored, a loss is ceiled.
+    /// a gain is floored, a loss is ceiled. A move of at least the entry price (|r| >= 1) is clamped before any
+    /// division: a gain of 1 + L * r >= 1 + L is past the cap and a loss of L * r >= 1 is past zero, the same values
+    /// the division gives, without its overflow on extreme ratios. Below that the quotient is under the cap. The loss
+    /// shortcut needs L >= 1: with L = 0 the division gives a loss of 0 (no overflow), so it keeps the old value.
     function multiplierFor(bool long, uint8 leverage, uint256 entry8, uint256 settle8) public pure returns (uint256) {
+        if (entry8 == 0) revert ZeroPrice();
         uint256 cap = uint256(leverage) * WAD;
         bool up = settle8 >= entry8;
         uint256 diff = up ? settle8 - entry8 : entry8 - settle8;
         bool gain = (up == long) || diff == 0;
         if (gain) {
+            if (diff >= entry8) return cap;
             uint256 g = Math.mulDiv(diff, cap, entry8, Math.Rounding.Floor);
             uint256 m = WAD + g;
             return m > cap ? cap : m;
         }
+        if (cap != 0 && diff >= entry8) return 0;
         uint256 loss = Math.mulDiv(diff, cap, entry8, Math.Rounding.Ceil);
         return loss >= WAD ? 0 : WAD - loss;
     }

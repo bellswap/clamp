@@ -69,6 +69,8 @@ References (contracts/src/references) put one interface, IReference, over Chainl
 - The vault reserves each ticket's full cap. This is safe but ties up a large share of the vault; netting long against short is future work.
 - A bucket whose reference never returns a price at or after expiry cannot settle; there is no refund path yet.
 - Playground only: the deployment in deployments/book.json is on a fork of Robinhood Chain run under chain id 46633 with play money, and its demo signer is a public development key.
+- DemoSignerReference stores the rounds of a symbol in strictly increasing timestamp order and anyone may relay a signed round. When two signed rounds of one symbol are outstanding, a relayer that posts the later one first makes the earlier one unstorable, and a settlement at or after both uses the later round (contracts/test/ClampAudit.t.sol). On the playground only the bell service can reach the reference (services/rpc-guard), and it posts one round per symbol per tick.
+- An entry price of zero is refused (the adapters' latest(), _checkOpen and multiplierFor), a market's reference cannot change while it has open interest, and the Pyth adapter accepts exactly one update element. These checks come from the 2026-10-23 review round (contracts/test/ClampAudit.t.sol). The playground still runs the build from before that round.
 
 ### Deployments
 
@@ -78,7 +80,7 @@ deployments/book.json lists the playground addresses of USDG, HouseVault, Ticket
 
     cd contracts
     forge build
-    forge test                 # 63 pass, 1 skipped (the fork test)
+    forge test                 # 75 pass, 1 skipped (the fork test)
     forge test --gas-report
     forge coverage --report summary
 

@@ -50,7 +50,8 @@ abstract contract AggregatorReference is IReference, Ownable {
     function latest(bytes32 symbol) external view returns (uint256 price8, uint64 timestamp, uint8 tier_) {
         AggregatorV3Interface f = _feed(symbol);
         (, int256 answer,, uint256 updatedAt,) = f.latestRoundData();
-        return (PriceScale.to8(answer, f.decimals()), SafeCast.toUint64(updatedAt), tier());
+        // F2: a positive answer that scales down to 0 is refused here, so it never becomes an entry price
+        return (PriceScale.nonZero(PriceScale.to8(answer, f.decimals())), SafeCast.toUint64(updatedAt), tier());
     }
 
     /// @inheritdoc IReference

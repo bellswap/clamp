@@ -15,10 +15,10 @@ import {MockUSDG} from "../test/mocks/MockUSDG.sol";
 ///
 /// Environment:
 ///   DEMO_SIGNER  required, the address whose signatures the DemoSignerReference accepts (the bell service key)
-///   USDG         optional; default: the Robinhood Chain USDG on chain 46633 (the playground fork), a fresh MockUSDG
+///   USDG         optional, must have 6 decimals; default: the Robinhood Chain USDG on chain 46633 (the playground fork), a fresh MockUSDG
 ///                (minted to the deployer) on any other chain id
 ///   SEED_USDG    optional, raw 6-decimal units the deployer deposits into the vault; default 1,000,000 USDG
-///   FEE_BPS      optional, default 100 (1%)
+///   FEE_BPS      optional, default 100 (1%), at most TicketBook.MAX_FEE_BPS (1000)
 ///   OWNER        optional, owner of the vault and the book; default the deployer
 ///
 /// On the fork the deployer must hold SEED_USDG of the real USDG before the run (set the balance on anvil first).
@@ -37,6 +37,8 @@ contract Deploy is Script {
     uint256 internal constant MAX_STAKE = 1_000e6;
     uint256 internal constant OI_CAP = 50_000e6;
     uint64 internal constant MAX_STALENESS = 1 days;
+    /// @dev TicketBook.MAX_FEE_BPS (a constant of another contract cannot be read without an instance)
+    uint256 internal constant MAX_FEE_BPS = 1000;
 
     struct M {
         string ticker;
@@ -46,6 +48,8 @@ contract Deploy is Script {
     error MainnetRefused();
     error SeedShort(uint256 balance, uint256 seed);
     error NoSender();
+    error FeeOutOfRange(uint256 feeBps);
+    error BadUsdgDecimals(uint8 decimals);
 
     function _markets() internal pure returns (M[14] memory m) {
         m[0] = M("RTX", false);
@@ -81,7 +85,10 @@ contract Deploy is Script {
         Out memory o;
         o.signer = vm.envAddress("DEMO_SIGNER");
         o.seed = vm.envOr("SEED_USDG", uint256(1_000_000e6));
-        o.feeBps = uint16(vm.envOr("FEE_BPS", uint256(100)));
+        // CONTRACTS-9: range-check the raw value before the cast, so 65636 cannot truncate to 100
+        uint256 feeBps = vm.envOr("FEE_BPS", uint256(100));
+        if (feeBps > MAX_FEE_BPS) revert FeeOutOfRange(feeBps);
+        o.feeBps = uint16(feeBps);
 
         // forge sets msg.sender to the single wallet passed with --private-key (or --sender)
         address deployer = msg.sender;
@@ -115,6 +122,9 @@ contract Deploy is Script {
                 o.mock = true;
             }
         }
+        // F5: amounts (MAX_STAKE, OI_CAP, SEED_USDG) and the json metadata assume 6 decimals
+        uint8 dec = IERC20Metadata(usdgAddr).decimals();
+        if (dec != 6) revert BadUsdgDecimals(dec);
         uint256 bal = IERC20(usdgAddr).balanceOf(deployer);
         if (bal < o.seed) revert SeedShort(bal, o.seed);
     }
